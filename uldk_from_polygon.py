@@ -4,10 +4,6 @@ import requests
 # select a vector layer to work with
 layer = iface.activeLayer()
 
-# set the coordinate reference system
-srid = 2180
-crs = QgsCoordinateReferenceSystem(f'EPSG:{srid}')
-
 # create a layer of request points
 results = processing.run("native:buffer", 
     {'INPUT':layer,
@@ -30,7 +26,7 @@ results = processing.run("native:creategrid",
     'VSPACING':spacing,
     'HOVERLAY':0,
     'VOVERLAY':0,
-    'CRS':crs,
+    'CRS':QgsCoordinateReferenceSystem('EPSG:2180'),
     'OUTPUT':'TEMPORARY_OUTPUT'})
     
 grid = results['OUTPUT']
@@ -44,7 +40,7 @@ rpoints = results['OUTPUT']
 
 # create the target layer
 found_parcels = QgsVectorLayer('Polygon', 'parcels', 'memory')
-found_parcels.setCrs(crs)
+found_parcels.setCrs(crsQgsCoordinateReferenceSystem('EPSG:2180'))
 provider = found_parcels.dataProvider()
 
 # add attributes to the layer
@@ -58,7 +54,7 @@ while rpoints.featureCount() > 0:
     first_point = next(rpoints.getFeatures())
     geom = first_point.geometry()
     coord = geom.asPoint()
-    response = requests.get(f'https://uldk.gugik.gov.pl/?request=GetParcelByXY&xy={coord.x()},{coord.y()},{srid}&result=geom_wkt,teryt,parcel')
+    response = requests.get(f'https://uldk.gugik.gov.pl/?request=GetParcelByXY&xy={coord.x()},{coord.y()}&result=geom_wkt,teryt,parcel')
     r = response.content
     
     rstring = str(r, encoding='utf-8').split('\n')[1].split(';')[1]
